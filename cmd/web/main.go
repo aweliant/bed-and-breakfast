@@ -13,50 +13,43 @@ import (
 
 const portNumber = ":8080"
 
-var cfg config.AppConfig
+var app config.AppConfig
 var session *scs.SessionManager
 
+// main is the main function
 func main() {
-	//http.ResponseWriter 是一种 io.Writer
-	//This is a handler func
-	//http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	//	n, err := fmt.Fprintf(w, "Hello world!")
-	//	if err != nil {
-	//		fmt.Println(err)
-	//	}
-	//	fmt.Println("Bytes written:" + string(n))
-	//})
-	cfg.InProduction = false
+	// change this to true when in production
+	app.InProduction = false
+
+	// set up the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
-	session.Cookie.Persist = true //behaviour after close window
+	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = cfg.InProduction //cookie is encrypted or not. if yes, https. if no, localhost ok
-	cfg.Session = session
-	//if cfg.UseCache {
-	tc, err := render.GenerateTemplateCache()
+	session.Cookie.Secure = app.InProduction
+
+	app.Session = session
+
+	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
 	}
-	cfg.TemplateCache = tc
-	cfg.UseCache = true
-	render.NewTemplates(&cfg)
-	//}
-	repo := handlers.NewRepo(&cfg)
+
+	app.TemplateCache = tc
+	app.UseCache = false
+
+	repo := handlers.NewRepo(&app)
 	handlers.NewHandlers(repo)
 
-	//这个叫set up routes
-	//http.HandleFunc("/", handlers.Repo.Home) //why not just repo.Home
-	//http.HandleFunc("/about", handlers.Repo.About)
+	render.NewTemplates(&app)
 
-	//使用pat包进行route
+	fmt.Println(fmt.Sprintf("Staring application on port %s", portNumber))
+
 	srv := &http.Server{
 		Addr:    portNumber,
-		Handler: routes(&cfg),
+		Handler: routes(&app),
 	}
 
-	fmt.Println(fmt.Sprintf("Starting application on port %s", portNumber))
-	//_ = http.ListenAndServe(portNumber, nil)
 	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
