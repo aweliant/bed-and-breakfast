@@ -1,2 +1,7 @@
 .idea
 .DS_Store
+database.yml
+run.sh
+coverage.out
+*.code-workspace
+

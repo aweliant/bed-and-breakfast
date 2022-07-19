@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/aweliant/bed-and-breakfast/internal/config"
+	"github.com/aweliant/bed-and-breakfast/internal/helpers"
 	"github.com/aweliant/bed-and-breakfast/internal/models"
 	"github.com/aweliant/bed-and-breakfast/internal/render"
 	"github.com/go-chi/chi"
@@ -13,6 +14,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 )
@@ -29,6 +31,10 @@ func getRoutes() http.Handler {
 	// change this to true when in production
 	app.InProduction = false
 
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = errorLog
 	// set up the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
@@ -49,8 +55,8 @@ func getRoutes() http.Handler {
 	repo := NewRepo(&app)
 	NewHandlers(repo)
 
-	render.NewTemplates(&app)
-
+	render.NewRenderer(&app)
+	helpers.NewHelpers(&app)
 	//above is copied from main, below is from routes.go.
 	//need to do the copy because we test based on main, but we cannot import main.
 
